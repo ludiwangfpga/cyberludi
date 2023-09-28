@@ -1,0 +1,68 @@
+import serial
+import time
+import struct
+
+ser = serial.Serial('COM7', 921600, timeout=1)
+try:
+    # Enter "AT command mode"
+    ser.write(bytes.fromhex('41 54 2b 41 54 0d 0a'))
+    response = ser.read(1000)
+    print(f"msg: {response}")
+
+    # Rotate the motor forward for 1 second
+    ser.write(bytes.fromhex('41 54 00 07 e8 0c 01 00 0d 0a'))
+    response = ser.read(1000)
+    print(f"msg: {response}")
+    ser.write(bytes.fromhex('41 54 00 07 e8 4c 01 00 0d 0a'))
+    response = ser.read(1000)
+    print(f"msg: {response}")
+    ser.write(bytes.fromhex('41 54 00 07 e8 8c 01 00 0d 0a'))
+    response = ser.read(1000)
+    ser.write(bytes.fromhex('41 54 98 07 e8 0c 08 3c 19 31 31 30 33 31 0a 0d 0a'))
+    response = ser.read(1000)
+
+
+    ser.write(bytes.fromhex('41 54 30 07 e8 0c 08 01 01 00 00 00 00 00 00 0d 0a'))
+    print(f"定位0点: {response}")
+
+    ser.write(bytes.fromhex('41 54 90 07 e8 0c 08 05 70 00 00 01 00 00 00 0d 0a'))
+    ser.write(bytes.fromhex('41 54 18 07 e8 0c 08 00 00 00 00 00 00 00 00 0d 0a'))
+    response = ser.read(1000)
+    print(f"位置模式: {response}")
+    time.sleep(2)
+
+    #速度5位置0
+    ser.write(bytes.fromhex('41 54 90 07 e8 0c 08 17 70 00 00 00 00 a0 40 0d 0a'))
+    ser.write(bytes.fromhex('41 54 90 07 e8 0c 08 16 70 00 00 00 00 00 00 0d 0a'))
+    print(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+    time.sleep(1)
+    while True:
+        #ser.write(bytes.fromhex('41 54 90 07 e8 0c 08 17 70 00 00 00 00 a0 40 0d 0a'))
+        angle_input = input("Enter the angle value in hex format (Q to quit): ")
+
+        if angle_input.upper() == "Q":
+            break
+
+        try:
+            angle_input = float(angle_input)
+            byte_data = struct.pack('f', angle_input)
+            hex_bytes = " ".join(f"{byte:02x}" for byte in byte_data)
+            ser.write(bytes.fromhex('41 54 90 07 e8 0c 08 17 70 00 00 00 00 a0 40 0d 0a'))
+            ser.write(bytes.fromhex(f'41 54 90 07 e8 0c 08 16 70 00 00 {hex_bytes} 0d 0a'))
+        except ValueError:
+            print("Invalid input. Please enter a valid float value or 'Q' to quit.")
+
+    ser.write(bytes.fromhex('41 54 20 07 e8 0c 08 00 00 00 00 00 00 00 00 0d 0a'))
+
+
+
+
+
+    ser.write(bytes.fromhex('41 54 20 07 e8 0c 08 00 00 00 00 00 00 00 00 0d 0a'))
+    print(f"停止模式: {response}")
+except Exception as e:
+    print(f"An error occurred: {e}")
+
+finally:
+    # Close the serial port
+    ser.close()
